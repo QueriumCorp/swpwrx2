@@ -10,13 +10,20 @@ from xblockutils.resources import ResourceLoader
 
 class Swpwrx2(XBlock):
     """
-    TO-DO: document what your XBlock does.
+    Provides a method for embedding a StepWise POWER problem V2 into OpenEdX
     """
+
+    has_author_view = True # tells the xblock to not ignore the AuthorView
+    has_score = True       # tells the xblock to not ignore the grade event
+    show_in_read_only_mode = True # tells the xblock to let the instructor view the student's work (lms/djangoapps/courseware/masquerade.py)
+
 
     # Fields are defined on the class.  You can access them in your code as
     # self.<fieldname>.
 
     # TO-DO: delete count, and define your own fields.
+
+    q_id = String(help="Question ID", default="", scope=Scope.content)
     count = Integer(
         default=0, scope=Scope.user_state,
         help="A simple counter, to show something happening",
@@ -34,16 +41,16 @@ class Swpwrx2(XBlock):
         """
         if context:
             pass  # TO-DO: do something based on the context.
-        html = self.resource_string("static/html/swpwrx2.html")
+        html = self.resource_string("static/html/swpwrx2student.html")
         frag = Fragment(html.format(self=self))
-        frag.add_css(self.resource_string("static/css/swpwrx2.css"))
+        frag.add_css(self.resource_string("static/css/swpwrx2student.css"))
 
         # Add i18n js
         statici18n_js_url = self._get_statici18n_js_url()
         if statici18n_js_url:
             frag.add_javascript_url(self.runtime.local_resource_url(self, statici18n_js_url))
 
-        frag.add_javascript(self.resource_string("static/js/src/swpwrx2.js"))
+        frag.add_javascript(self.resource_string("static/js/src/swpwrx2student.js"))
         frag.initialize_js('Swpwrx2')
         return frag
 
@@ -79,6 +86,43 @@ class Swpwrx2(XBlock):
                 </vertical_demo>
              """),
         ]
+
+    def studio_view(self, context=None):
+        if DEBUG: logger.info('SWPWRX2 studio_view() entered.')
+        """
+        The STUDIO view of the Swpwrx2 XBlock, shown to instructors
+        when authoring courses.
+        """
+        html = self.resource_string("static/html/swpwrx2studio.html")
+        frag = Fragment(html.format(self=self))
+        frag.add_css(self.resource_string("static/css/swpwrx2studio.css"))
+        frag.add_javascript(self.resource_string("static/js/src/swpwrx2studio.js"))
+
+        frag.initialize_js('Swpwrx2Studio')
+        return frag
+
+
+    def author_view(self, context=None):
+        if DEBUG: logger.info('Swpwrx2 author_view() entered')
+        """
+        The AUTHOR view of the Swpwrx2 XBlock, shown to instructors
+        when previewing courses.
+        """
+        html = self.resource_string("static/html/swpwrx2author.html")
+        frag = Fragment(html.format(self=self))
+        frag.add_css(self.resource_string("static/css/swpwrx2author.css"))
+        frag.add_javascript_url("//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML")
+        frag.add_javascript(self.resource_string("static/js/src/swpwrx2author.js"))
+
+        if DEBUG: logger.info("Swpwrx2 author_view v={a}".format(a=self.q_definition))
+
+        # tell author_view how many variants are defined
+        variants = 1
+
+        if DEBUG: logger.info("Swpwrx2 XBlock author_view variants={a}".format(a=variants))
+
+        frag.initialize_js('Swpwrx2Author', variants)
+        return frag
 
     @staticmethod
     def _get_statici18n_js_url():

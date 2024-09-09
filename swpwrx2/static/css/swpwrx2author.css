@@ -1,0 +1,35 @@
+.problems-wrapper .stepwise_logo {
+    bottom: 10px;
+    right: 20px;
+    width: 64px;
+    height: 32px;
+    position: absolute;
+    opacity: 0.5;
+}
+
+.problems-wrapper .problemSet {
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    overflow-x: scroll;
+}
+
+.problems-wrapper .problemSet .problem {
+    font-size: 75%;
+    border-radius: 7px;
+    padding: 5px 5px 10px 5px;
+    border: 1px solid #e5e5e5;
+    background-color: #f9f9f9;
+    margin: 3px;
+    flex-grow: 1;
+}
+
+.problems-wrapper .problemSet .problem h3 {
+    margin-top: 5px;
+    font-size: 125%;
+    font-weight: 600;
+}
+
+.problems-wrapper .problemSet .problem-empty {
+    display: none;
+}
