@@ -1,0 +1,9 @@
+/* CSS for Swpwrx2 */
+
+.swpwrx2_block .count {
+    font-weight: bold;
+}
+
+.swpwrx2_block p {
+    cursor: pointer;
+}
