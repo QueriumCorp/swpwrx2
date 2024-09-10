@@ -8,6 +8,10 @@ from xblock.fields import Integer, String, Scope, Dict, Float, Boolean
 from xblockutils.resources import ResourceLoader
 
 
+#DEBUG=settings.ROVER_DEBUG
+# DEBUG=False
+DEBUG=True
+
 class Swpwrx2(XBlock):
     """
     Provides a method for embedding a StepWise POWER problem V2 into OpenEdX
