@@ -1,12 +1,15 @@
 """TO-DO: Write a description of what this XBlock is."""
 
 import pkg_resources
+from logging import getLogger
+
 from django.utils import translation
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Integer, String, Scope, Dict, Float, Boolean
 from xblockutils.resources import ResourceLoader
 
+logger = getLogger(__name__)
 
 #DEBUG=settings.ROVER_DEBUG
 # DEBUG=False
