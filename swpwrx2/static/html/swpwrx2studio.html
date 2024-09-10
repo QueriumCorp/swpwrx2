@@ -1,0 +1,33 @@
+<div class="wrapper-comp-settings is-active editor-with-buttons">
+
+  <!-- The default question -->
+  <ul class="list-input settings-list">
+    <h2>Base Question Specification</h2>
+    <li class="field comp-setting-entry metadata_entry">
+      <div class="wrapper-comp-setting">
+        <label for="id" class="label setting-label">Id</label>
+        <input id='id' type="text" name="id" value="{self.q_id}" class="input setting-input">
+      </div>
+      <span class="tip setting-help">The optional StepWise id for this question.</span>
+    </li>
+    <li class="field comp-setting-entry metadata_entry">
+      <div class="wrapper-comp-setting">
+        <label for="count" class="label setting-label">Count</label>
+        <input id='count' type="number" name="count" value="{self.count}" class="input setting-input">
+      </div>
+      <span class="tip setting-help">The count for this xblock.</span>
+    </li>
+
+  </ul>
+
+  <div class="xblock-actions">
+    <ul>
+      <li class="action-item">
+        <a href="#" class="button action-primary save-button">Save</a>
+      </li>
+      <li class="action-item">
+        <a href="#" class="button cancel-button">Cancel</a>
+      </li>
+    </ul>
+  </div>
+</div>
