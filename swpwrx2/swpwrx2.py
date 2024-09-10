@@ -4,7 +4,7 @@ import pkg_resources
 from django.utils import translation
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
-from xblock.fields import Integer, Scope
+from xblock.fields import Integer, String, Scope, Dict, Float, Boolean
 from xblockutils.resources import ResourceLoader
 
 
@@ -24,6 +24,7 @@ class Swpwrx2(XBlock):
     # TO-DO: delete count, and define your own fields.
 
     q_id = String(help="Question ID", default="", scope=Scope.content)
+
     count = Integer(
         default=0, scope=Scope.user_state,
         help="A simple counter, to show something happening",
