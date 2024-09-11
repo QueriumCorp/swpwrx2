@@ -122,7 +122,7 @@ class Swpwrx2(XBlock):
         frag.add_javascript_url("//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML")
         frag.add_javascript(self.resource_string("static/js/src/swpwrx2author.js"))
 
-        if DEBUG: logger.info("Swpwrx2 author_view v={a}".format(a=self.q_definition))
+        # if DEBUG: logger.info("Swpwrx2 author_view v={a}".format(a=self.q_definition))
 
         # tell author_view how many variants are defined
         variants = 1
