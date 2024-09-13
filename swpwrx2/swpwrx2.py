@@ -1,19 +1,34 @@
 """TO-DO: Write a description of what this XBlock is."""
 
 import pkg_resources
+import random
+import json
+import re
 from logging import getLogger
 
+from django.conf import settings
 from django.utils import translation
+
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Integer, String, Scope, Dict, Float, Boolean
 from xblockutils.resources import ResourceLoader
+from xblock.scorable import ScorableXBlockMixin, Score
+from xblockutils.studio_editable import StudioEditableXBlockMixin
+from lms.djangoapps.courseware.courses import get_course_by_id
+
+from django.utils import translation
+
+UNSET = object()
 
 logger = getLogger(__name__)
 
 #DEBUG=settings.ROVER_DEBUG
 # DEBUG=False
 DEBUG=True
+
+DEFAULT_RANK="cadet"  # What we'll use for a rank if not modified by the user/default
+TEST_MODE=False
 
 class Swpwrx2(XBlock):
     """
