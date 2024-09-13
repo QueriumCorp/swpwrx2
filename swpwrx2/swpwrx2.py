@@ -64,7 +64,7 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         help="A simple counter, to show something happening",
     )
 
-        q_grade_showme_ded = Float(display_name="Point deduction for using Show Solution",help="SWPWR Raw points deducted from 3.0 (Default: 3.0)", default=3.0, scope=Scope.content)
+    q_grade_showme_ded = Float(display_name="Point deduction for using Show Solution",help="SWPWR Raw points deducted from 3.0 (Default: 3.0)", default=3.0, scope=Scope.content)
     q_grade_hints_count = Integer(help="SWPWR Number of Hints before deduction", default=2, scope=Scope.content)
     q_grade_hints_ded = Float(help="SWPWR Point deduction for using excessive Hints", default=1.0, scope=Scope.content)
     q_grade_errors_count = Integer(help="SWPWR Number of Errors before deduction", default=2, scope=Scope.content)
@@ -92,7 +92,7 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
     q_hint1 = String(help="SWPWR First Math Hint", default='', scope=Scope.content)
     q_hint2 = String(help="SWPWR Second Math Hint", default='', scope=Scope.content)
     q_hint3 = String(help="SWPWR Third Math Hint", default='', scope=Scope.content)
-        q_swpwr_problem = String(help="SWPWR SWPWR Problem", default='', scope=Scope.content)
+    q_swpwr_problem = String(help="SWPWR SWPWR Problem", default='', scope=Scope.content)
     # Invalid schema choices should be a CSV list of one or more of these: "TOTAL", "DIFFERENCE", "CHANGEINCREASE", "CHANGEDECREASE", "EQUALGROUPS", and "COMPARE"
     # Invalid schema choices can also be the official names: "additiveTotalSchema", "additiveDifferenceSchema", "additiveChangeSchema", "subtractiveChangeSchema", "multiplicativeEqualGroupsSchema", and "multiplicativeCompareSchema"
     # This Xblock converts the upper-case names to the official names when constructing the launch code for the React app, so you can mix these names.
