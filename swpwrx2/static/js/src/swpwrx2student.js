@@ -1,5 +1,5 @@
 /* Javascript for Swpwrx2. */
-function Swpwrx2student(runtime, element) {
+function Swpwrx2(runtime, element) {
 
     function updateCount(result) {
         $('.count', element).text(result.count);
