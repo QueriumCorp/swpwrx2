@@ -608,7 +608,8 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         if statici18n_js_url:
             frag.add_javascript_url(self.runtime.local_resource_url(self, statici18n_js_url))
 
-        frag.add_javascript(self.resource_string("static/js/src/final_callback.js"))    # Final submit callback code and define swpwr_problems[]
+        # We no longer need to call final_callback.js since the code is generated in swpwr_string
+        # frag.add_javascript(self.resource_string("static/js/src/final_callback.js"))
         invalid_schemas_js = self.q_swpwr_invalid_schemas
         if DEBUG: logger.info("SWPWRXBlock student_view() before mapping loop invalid_schemas_js={e}".format(e=invalid_schemas_js))
         mapping = { "TOTAL":"additiveTotalSchema", "DIFFERENCE":"additiveDifferenceSchema", "CHANGEINCREASE":"additiveChangeSchema", "CHANGEDECREASE":"subtractiveChangeSchema", "EQUALGROUPS":"multiplicativeEqualGroupsSchema", "COMPARE":"multiplicativeCompareSchema" }
