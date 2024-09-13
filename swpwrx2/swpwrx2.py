@@ -681,6 +681,568 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         frag.initialize_js('Swpwrx2student', {})   # Call the entry point
         return frag
 
+    # PUBLISH_GRADE
+    # For rescoring events
+    def publish_grade(self):
+        if DEBUG: logger.info("SWPWRXBlock publish_grade() self.raw_earned={e} self.weight={w}".format(e=self.raw_earned,w=self.weight))
+        if self.raw_earned < 0.0:
+           self.raw_earned = 0.0
+        if self.raw_earned > self.weight:
+           self.raw_earned = self.weight
+        self.runtime.publish(self, 'grade',
+             {   'value': self.raw_earned,
+                 'max_value': self.weight
+             })
+
+
+
+    # SAVE
+    def save(self):
+        if DEBUG: logger.info("SWPWRXBlock save() self{s}".format(s=self))
+        try:
+            XBlock.save(self)       # Call parent class save()
+        # except (NameError,AttributeError,InvalidScopeError) as e:
+        except Exception as e:
+            logger.info('SWPWRXBlock save() had an error: {e}'.format(e=e))
+        if DEBUG: logger.info("SWPWRXBlock save() back from parent save. self.solution={s}".format(s=self.solution))
+
+
+    # GET_DATA: RETURN DATA FOR THIS QUESTION
+    @XBlock.json_handler
+    def get_data(self, msg, suffix=''):
+        if DEBUG: logger.info("SWPWRXBlock get_data() entered. msg={msg}".format(msg=msg))
+
+        if self.my_max_attempts is None:
+            self.my_max_attempts = -1
+
+        data = {
+            "question" : self.question,
+            "grade" : self.grade,
+            "solution" : self.solution,
+            "count_attempts" : self.count_attempts,
+            "variants_count" : self.variants_count,
+            "max_attempts" : self.my_max_attempts
+        }
+        if DEBUG: logger.info("SWPWRXBlock get_data() data={d}".format(d=data))
+        json_data = json.dumps(data)
+        return json_data
+
+    # SAVE GRADE
+    @XBlock.json_handler
+    def save_grade(self, data, suffix=''):
+        if DEBUG: logger.info('SWPWRXBlock save_grade() entered')
+        if DEBUG: logger.info("SWPWRXBlock save_grade() self.max_attempts={a}".format(a=self.max_attempts))
+
+        # Check for missing grading attributes
+
+        if DEBUG: logger.info("SWPWRXBlock save_grade() initial self={a}".format(a=self))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() initial data={a}".format(a=data))
+
+        try: swpwr_results = self.swpwr_results
+        except (NameError,AttributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.swpwr_results was not defined: {e}'.format(e=e))
+             swpwr_results = ""
+
+        try: q_weight = self.q_weight
+        except (NameError,AttributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_weight was not defined: {e}'.format(e=e))
+             q_weight = 1.0
+
+        try: q_grade_showme_ded = self.q_grade_showme_ded
+        except (NameError,AtrributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_grade_showme_dev was not defined: {e}'.format(e=e))
+             q_grade_showme_ded = -1
+
+        try: q_grade_hints_count = self.q_grade_hints_count
+        except (NameError,AtrributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_grade_hints_count was not defined: {e}',format(e=e))
+             q_grade_hints_count = -1
+
+        try: q_grade_hints_ded = self.q_grade_hints_ded
+        except (NameError,AtrributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_grade_hints_ded was not defined: {e}'.format(e=e))
+             q_grade_hints_ded = -1
+
+        try: q_grade_errors_count = self.q_grade_errors_count
+        except (NameError,AtrributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_grade_errors_count was not defined: {e}'.format(e=e))
+             q_grade_errors_count = -1
+
+        try: q_grade_errors_ded = self.q_grade_errors_ded
+        except (NameError,AtrributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_grade_errors_ded was not defined: {e}'.format(e=e))
+             q_grade_errors_ded = -1
+
+        try: q_grade_min_steps_count = self.q_grade_min_steps_count
+        except (NameError,AtrributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_grade_min_steps_count was not defined: {e}'.format(e=e))
+             q_grade_min_steps_count = -1
+
+        try: q_grade_min_steps_ded = self.q_grade_min_steps_ded
+        except (NameError,AtrributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_grade_min_steps_ded was not defined: {e}'.format(e=e))
+             q_grade_min_steps_ded = -1
+
+        try: q_grade_app_key = self.q_grade_app_key
+        except (NameError,AtrributeError) as e:
+             if DEBUG: logger.info('SWPWRXBlock save_grade() self.q_grade_app_key was not defined: {e}'.format(e=e))
+             q_grade_app_key = "SBIRPhase2"
+
+        # Apply grading defaults
+
+        if q_weight == -1:
+            if DEBUG: logger.info('SWPWRXBlock save_grade() weight set to 1.0')
+            q_weight = 1.0
+        if q_grade_showme_ded == -1:
+            if DEBUG: logger.info('SWPWRXBlock save_grade() showme default set to 3.0')
+            q_grade_showme_ded = 3.0
+        if q_grade_hints_count == -1:
+            if DEBUG: logger.info('SWPWRXBlock save_grade() hints_count default set to 2')
+            q_grade_hints_count = 2
+        if q_grade_hints_ded == -1:
+            if DEBUG: logger.info('SWPWRXBlock save_grade() hints_ded default set to 1.0')
+            q_grade_hints_ded = 1.0
+        if q_grade_errors_count == -1:
+            if DEBUG: logger.info('SWPWRXBlock save_grade() errors_count default set to 3')
+            q_grade_errors_count = 3
+        if q_grade_errors_ded == -1:
+            if DEBUG: logger.info('SWPWRXBlock save_grade() errors_ded default set to 1.0')
+            q_grade_errors_ded = 1.0
+        if q_grade_min_steps_ded == -1:
+            if DEBUG: logger.info('SWPWRXBlock save_grade() min_steps_ded default set to 0.25')
+            q_grade_min_steps_ded = 0.25
+        if q_grade_app_key == "":
+            if DEBUG: logger.info('SWPWRXBlock save_grade() app_key default set to SBIRPhase2')
+            q_grade_app_key = "SBIRPhase2"
+
+        """
+        Count the total number of VALID steps the student input.
+        Used to determine if they get full credit for entering at least a min number of good steps.
+        """
+        valid_steps = 0
+
+        if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps data={d}".format(d=data))
+        step_details = data['stepDetails']
+        if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps step_details={d}".format(d=step_details))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps len(step_details)={l}".format(l=len(step_details)))
+        for c in range(len(step_details)):
+            if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps begin examine step c={c} step_details[c]={d}".format(c=c,d=step_details[c]))
+            for i in range (len(step_details[c]['info'])):
+                if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps examine step c={c} i={i} step_details[c]['info']={s}".format(c=c,i=i,s=step_details[c]['info']))
+                if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps examine step c={c} i={i} step_details[c]['info'][i]={s}".format(c=c,i=i,s=step_details[c]['info'][i]))
+                step_status = step_details[c]['info'][i]['status']
+                if (step_status == 0):       # victory valid_steps += 1
+                    valid_steps += 1
+                    if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps c={c} i={i} victory step found".format(c=c,i=i))
+                elif (step_status == 1):     # valid step
+                    valid_steps += 1
+                    if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps c={c} i={i} valid step found".format(c=c,i=i))
+                elif (step_status == 3):     # invalid step
+                    valid_steps += 0         # don't count invalid steps
+                else:
+                    if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps c={c} i={i} ignoring step_status={s}".format(c=c,i=i,s=step_status))
+                if DEBUG: logger.info("SWPWRXBlock save_grade() count valid_steps examine step c={c} i={i} step_status={s} valid_steps={v}".format(c=c,i=i,s=step_status,v=valid_steps))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final valid_steps={v}".format(v=valid_steps))
+
+        grade=3.0
+        max_grade=grade
+
+        if DEBUG: logger.info('SWPWRXBlock save_grade() initial grade={a} errors={b} errors_count={c} hints={d} hints_count={e} showme={f} min_steps={g} valid_steps={h}'.format(a=grade,b=data['errors'],c=q_grade_errors_count,d=data['hints'],e=q_grade_hints_count,f=data['usedShowMe'],g=q_grade_min_steps_count,h=valid_steps))
+        if data['errors']>q_grade_errors_count:
+            grade=grade-q_grade_errors_ded
+            if DEBUG: logger.info('SWPWRXBlock save_grade() errors test errors_ded={a} grade={b}'.format(a=q_grade_errors_ded,b=grade))
+        if data['hints']>q_grade_hints_count:
+            grade=grade-q_grade_hints_ded
+            if DEBUG: logger.info('SWPWRXBlock save_grade() hints test hints_ded={a} grade={b}'.format(a=q_grade_hints_ded,b=grade))
+        if data['usedShowMe']:
+            grade=grade-q_grade_showme_ded
+            if DEBUG: logger.info('SWPWRXBlock save_grade() showme test showme_ded={a} grade={b}'.format(a=q_grade_showme_ded,b=grade))
+
+        # Don't subtract min_steps points on a MatchSpec problem or DomainOf
+        self.my_q_definition = data['answered_question']['q_definition']
+        if DEBUG: logger.info('SWPWRXBlock save_grade() check on min_steps deduction grade={g} max_grade={m} q_grade_min_steps_count={c} q_grade_min_steps_ded={d} self.my_q_definition={q} self.q_grade_app_key={k}'.format(g=grade,m=max_grade,c=q_grade_min_steps_count,d=q_grade_min_steps_ded,q=self.my_q_definition,k=self.q_grade_app_key))
+        if (grade >= max_grade and valid_steps < q_grade_min_steps_count and self.my_q_definition.count('MatchSpec') == 0 and self.my_q_definition.count('DomainOf') == 0 ):
+            grade=grade-q_grade_min_steps_ded
+            if DEBUG: logger.info('SWPWRXBlock save_grade() took min_steps deduction after grade={g}'.format(g=grade))
+        else:
+            if DEBUG: logger.info('SWPWRXBlock save_grade() did not take min_steps deduction after grade={g}'.format(g=grade))
+
+        if grade<0.0:
+            logger.info('SWPWRXBlock save_grade() zero negative grade')
+            grade=0.0
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final grade={a} q_weight={b}".format(a=grade,b=q_weight))
+
+        self.runtime.publish(self, 'grade',
+            {   'value': (grade/3.0)*q_weight,
+                'max_value': 1.0*q_weight
+            })
+
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final data={a}".format(a=data))
+        self.solution = data
+        self.grade = grade
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final self.solution={a}".format(a=self.solution))
+
+        # Don't increment attempts on save grade.  We want to increment them when the student starts
+        # a question, not when they finish.  Otherwise people can start the question as many times
+        # as they want as long as they don't finish it, then reload the page.
+        # self.count_attempts += 1
+        # make sure we've recorded this atttempt, but it should have been done in start_attempt():
+        try:
+            if self.q_index != -1:
+                self.variants_attempted = set.bit_set_one(self.variants_attempted,self.q_index)
+                if DEBUG: logger.info("SWPWRXBlock save_grade() record variants_attempted for variant {a}".format(v=self.q_index))
+                self.previous_variant = self.q_index
+                if DEBUG: logger.info("SWPWRXBlock save_grade() record previous_variant for variant {a}".format(v=self.previous_variant))
+            else:
+                if DEBUG: logger.error("SWPWRXBlock save_grade record variants_attempted for variant -1")
+        except (NameError,AttributeError) as e:
+            if DEBUG: logger.warning('SWPWRXBlock save_grade() self.q_index was not defined: {e}'.format(e=e))
+
+        self.save()     # Time to persist our state!!!
+
+        # if DEBUG: logger.info("SWPWRXBlock save_grade() final self={a}".format(a=self))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final self.count_attempts={a}".format(a=self.count_attempts))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final self.solution={a}".format(a=self.solution))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final self.grade={a}".format(a=self.grade))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final self.weight={a}".format(a=self.weight))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final self.variants_attempted={v}".format(v=self.variants_attempted))
+        if DEBUG: logger.info("SWPWRXBlock save_grade() final self.previous_variant={v}".format(v=self.previous_variant))
+
+
+
+    # START ATTEMPT
+    @XBlock.json_handler
+    def start_attempt(self, data, suffix=''):
+        if DEBUG: logger.info("SWPWRXBlock start_attempt() entered")
+        if DEBUG: logger.info("SWPWRXBlock start_attempt() data={d}".format(d=data))
+        if DEBUG: logger.info("SWPWRXBlock start_attempt() self.count_attempts={c} max_attempts={m}".format(c=self.count_attempts,m=self.max_attempts))
+        if DEBUG: logger.info("SWPWRXBlock start_attempt() self.variants_attempted={v}".format(v=self.variants_attempted))
+        if DEBUG: logger.info("SWPWRXBlock start_attempt() self.previous_variant={v}".format(v=self.previous_variant))
+        # logger.info("SWPWRXBlock start_attempt() action={d} sessionId={s} timeMark={t}".format(d=data['status']['action'],s=data['status']['sessionId'],t=data['status']['timeMark']))
+        if DEBUG: logger.info("SWPWRXBlock start_attempt() passed q_index={q}".format(q=data['q_index']))
+        self.count_attempts += 1
+        if DEBUG: logger.info("SWPWRXBlock start_attempt() updated self.count_attempts={c}".format(c=self.count_attempts))
+        variant = data['q_index']
+        if DEBUG: logger.info("variant is {v}".format(v=variant))
+        if self.bit_is_set(self.variants_attempted,variant):
+            if DEBUG: logger.info("variant {v} has already been attempted!".format(v=variant))
+        else:
+            if DEBUG: logger.info("adding variant {v} to self.variants_attempted={s}".format(v=variant,s=self.variants_attempted))
+            self.variants_attempted = self.bit_set_one(self.variants_attempted,variant)
+            if DEBUG: logger.info("checking bit_is_set {v}={b}".format(v=variant,b=self.bit_is_set(self.variants_attempted,variant)))
+            self.previous_variant = variant
+            if DEBUG: logger.info("setting previous_variant to {v}".format(v=variant))
+
+        return_data = {
+            "count_attempts" : self.count_attempts,
+        }
+        if DEBUG: logger.info("SWPWRXBlock start_attempt() done return_data={return_data}".format(return_data=return_data))
+        json_data = json.dumps(return_data)
+        return json_data
+
+    # RESET: PICK A NEW VARIANT
+    @XBlock.json_handler
+    def retry(self, data, suffix=''):
+        if DEBUG: logger.info("SWPWRXBlock retry() entered")
+        if DEBUG: logger.info("SWPWRXBlock retry() data={d}".format(d=data))
+        if DEBUG: logger.info("SWPWRXBlock retry() self.count_attempts={c} max_attempts={m}".format(c=self.count_attempts,m=self.max_attempts))
+        if DEBUG: logger.info("SWPWRXBlock retry() self.variants_attempted={v}".format(v=self.variants_attempted))
+        if DEBUG: logger.info("SWPWRXBlock retry() pre-pick_question q_index={i}".format(v=self.question['q_index']))
+        self.question = self.pick_variant()
+
+        return_data = {
+            "question" : self.question,
+        }
+
+        if DEBUG: logger.info("SWPWRXBlock retry() post-pick returning self.question={q} return_data={r}".format(q=self.question,r=return_data))
+        json_data = json.dumps(return_data)
+        return json_data
+
+
+    # SAVE_QUESTION
+    @XBlock.json_handler
+    def save_question(self, data, suffix=''):
+        if DEBUG: logger.info('SWPWRXBlock save_question() entered')
+        if DEBUG: logger.info('SWPWRXBlock save_question() data={d}'.format(d=data))
+        self.q_max_attempts = int(data['q_max_attempts'])
+        self.q_weight = float(data['q_weight'])
+        if data['q_option_showme'].lower() == u'true':
+            self.q_option_showme = True
+        else:
+            self.q_option_showme = False
+        if data['q_option_hint'].lower() == u'true':
+            self.q_option_hint = True
+        else:
+            self.q_option_hint = False
+        self.q_grade_showme_ded = float(data['q_grade_showme_ded'])
+        self.q_grade_hints_count = int(data['q_grade_hints_count'])
+        self.q_grade_hints_ded = float(data['q_grade_hints_ded'])
+        self.q_grade_errors_count = int(data['q_grade_errors_count'])
+        self.q_grade_errors_ded = float(data['q_grade_errors_ded'])
+        self.q_grade_min_steps_count = int(data['q_grade_min_steps_count'])
+        self.q_grade_min_steps_ded = float(data['q_grade_min_steps_ded'])
+        self.q_grade_app_key = str(data['q_grade_app_key'])
+
+        self.q_id = data['id']
+        self.q_label = data['label']
+        self.q_stimulus = data['stimulus']
+        self.q_definition = data['definition']
+        self.q_type = data['qtype']
+        self.q_display_math = data['display_math']
+        self.q_hint1 = data['hint1']
+        self.q_hint2 = data['hint2']
+        self.q_hint3 = data['hint3']
+        self.q_swpwr_problem = data['swpwr_problem']
+        self.q_swpwr_rank = data['swpwr_rank']
+        self.q_swpwr_invalid_schemas = data['swpwr_invalid_schemas']
+        self.q_swpwr_problem_hints = data['swpwr_problem_hints']
+
+        self.display_name = "Step-by-Step POWER"
+
+        # mcdaniel jul-2020: fix syntax error in print statement
+        print(self.display_name)
+        return {'result': 'success'}
+
+# SWPWR RESULTS: Save the final results of the SWPWR React app as a stringified structure.
+    @XBlock.json_handler
+    def save_swpwr_results(self, data, suffix=''):
+        if DEBUG: logger.info("SWPWRXBlock save_swpwr_results() data={d}".format(d=data))
+        self.swpwr_results = json.dumps(data, separators=(',', ':'))
+        if DEBUG: logger.info("SWPWRXBlock save_swpwr_results() self.swpwr_results={r}".format(r=self.swpwr_results))
+        self.save() # Time to persist our state!!!
+        if DEBUG: logger.info("SWPWRXBlock save_swpwr_results() back from save")
+        return {'result': 'success'}
+
+    # Do necessary overrides from ScorableXBlockMixin
+    def has_submitted_answer(self):
+        if DEBUG: logger.info('SWPWRXBlock has_submitted_answer() entered')
+        """
+        Returns True if the problem has been answered by the runtime user.
+        """
+        if DEBUG: logger.info("SWPWRXBlock has_submitted_answer() {a}".format(a=self.is_answered))
+        return self.is_answered
+
+
+    def get_score(self):
+        if DEBUG: logger.info('SWPWRXBlock get_score() entered')
+        """
+        Return a raw score already persisted on the XBlock.  Should not
+        perform new calculations.
+        Returns:
+            Score(raw_earned=float, raw_possible=float)
+        """
+        if DEBUG: logger.info("SWPWRXBlock get_score() earned {e}".format(e=self.raw_earned))
+        if DEBUG: logger.info("SWPWRXBlock get_score() max {m}".format(m=self.max_score()))
+        return Score(float(self.raw_earned), float(self.max_score()))
+
+    def set_score(self, score):
+        """
+        Persist a score to the XBlock.
+        The score is a named tuple with a raw_earned attribute and a
+        raw_possible attribute, reflecting the raw earned score and the maximum
+        raw score the student could have earned respectively.
+        Arguments:
+            score: Score(raw_earned=float, raw_possible=float)
+        Returns:
+            None
+        """
+        if DEBUG: logger.info("SWPWRXBlock set_score() earned {e}".format(e=score.raw_earned))
+        self.raw_earned = score.raw_earned
+
+
+    def calculate_score(self):
+        """
+        Calculate a new raw score based on the state of the problem.
+        This method should not modify the state of the XBlock.
+        Returns:
+            Score(raw_earned=float, raw_possible=float)
+        """
+        if DEBUG: logger.info("SWPWRXBlock calculate_score() grade {g}".format(g=self.grade))
+        if DEBUG: logger.info("SWPWRXBlock calculate_score() max {m}".format(m=self.max_score))
+        return Score(float(self.grade), float(self.max_score()))
+
+
+    def allows_rescore(self):
+        """
+        Boolean value: Can this problem be rescored?
+        Subtypes may wish to override this if they need conditional support for
+        rescoring.
+        """
+        if DEBUG: logger.info("SWPWRXBlock allows_rescore() False")
+        return False
+
+
+    def max_score(self):
+        """
+        Function which returns the max score for an xBlock which emits a score
+        https://openedx.atlassian.net/wiki/spaces/AC/pages/161400730/Open+edX+Runtime+XBlock+API#OpenedXRuntimeXBlockAPI-max_score(self):
+        :return: Max Score for this problem
+        """
+        # Want the normalized, unweighted score here (1), not the points possible (3)
+        return 1
+    def weighted_grade(self):
+        """
+        Returns the block's current saved grade multiplied by the block's
+        weight- the number of points earned by the learner.
+        """
+        if DEBUG: logger.info("SWPWRXBlock weighted_grade() earned {e}".format(e=self.raw_earned))
+        if DEBUG: logger.info("SWPWRXBlock weighted_grade() weight {w}".format(w=self.q_weight))
+        return self.raw_earned * self.q_weight
+
+
+    def bit_count_ones(self,var):
+        """
+        Returns the count of one bits in an integer variable
+        Note that Python ints are full-fledged objects, unlike in C, so ints are plenty long for these operations.
+        """
+        if DEBUG: logger.info("SWPWRXBlock bit_count_ones var={v}".format(v=var))
+        count=0
+        bits = var
+        for b in range(32):
+            lsb = (bits >> b) & 1;
+            count = count + lsb;
+        if DEBUG: logger.info("SWPWRXBlock bit_count_ones result={c}".format(c=count))
+        return count
+
+
+    def bit_set_one(self,var,bitnum):
+        """
+        return var = var with bit 'bitnum' set
+        Note that Python ints are full-fledged objects, unlike in C, so ints are plenty long for these operations.
+        """
+        if DEBUG: logger.info("SWPWRXBlock bit_set_one var={v} bitnum={b}".format(v=var,b=bitnum))
+        var = var | (1 << bitnum)
+        if DEBUG: logger.info("SWPWRXBlock bit_set_one result={v}".format(v=var))
+        return var
+    def bit_is_set(self,var,bitnum):
+        """
+        return True if bit bitnum is set in var
+        Note that Python ints are full-fledged objects, unlike in C, so ints are plenty long for these operations.
+        """
+        if DEBUG: logger.info("SWPWRXBlock bit_is_set var={v} bitnum={b}".format(v=var,b=bitnum))
+        result = var & (1 << bitnum)
+        if DEBUG: logger.info("SWPWRXBlock bit_is_set result={v} b={b}".format(v=result,b=bool(result)))
+        return bool(result)
+
+
+    def pick_variant(self):
+       # pick_variant() selects one of the available question variants that we have not yet attempted.
+       # If there is only one variant left, we have to return that one.
+       # If there are 2+ variants left, do not return the same one we started with.
+       # If we've attempted all variants, we clear the list of attempted variants and pick again.
+       #  Returns the question structure for the one we will use this time.
+
+        try:
+            prev_index = self.q_index
+        except (NameError,AttributeError) as e:
+            prev_index = -1
+
+        if DEBUG: logger.info("SWPWRXBlock pick_variant() started replacing prev_index={p}".format(p=prev_index))
+
+        # If there's no self.q_index, then this is our first look at this question in this session, so
+        # use self.previous_variant if we can.  This won't restore all previous attempts, but makes sure we
+        # don't use the variant that is displayed in the student's last attempt data.
+        if (prev_index == -1):
+            try:         # use try block in case attribute wasn't saved in previous student work
+                 prev_index = self.previous_variant
+                 if DEBUG: logger.info("SWPWRXBlock pick_variant() using previous_variant for prev_index={p}".format(p=prev_index))
+            except (NameError,AttributeError) as e:
+                 if DEBUG: logger.info("SWPWRXBlock pick_variant() self.previous_variant does not exist. Using -1: {e}".format(e=e))
+                 prev_index = -1
+        if self.bit_count_ones(self.variants_attempted) >= self.variants_count:
+            if DEBUG: logger.warn("SWPWRXBlock pick_variant() seen all variants attempted={a} count={c}, clearing variants_attempted".format(a=self.variants_attempted,c=self.variants_count))
+            self.variants_attempted = 0                 # We have not yet attempted any variants
+
+        tries = 0                                       # Make sure we dont try forever to find a new variant
+        max_tries = 100
+
+        if self.variants_count <= 0:
+            if DEBUG: logger.warn("SWPWRXBlock pick_variant() bad variants_count={c}, setting to 1.".format(c=self.variants_count))
+            self.variants_count = 1;
+
+        while tries<max_tries:
+            tries=tries+1
+            q_randint = random.randint(0, ((self.variants_count*100)-1))        # 0..999 for 10 variants, 0..99 for 1 variant, etc.
+            if DEBUG: logger.info("SWPWRXBlock pick_variant() try {t}: q_randint={r}".format(t=tries,r=q_randint))
+
+            if q_randint>=0 and q_randint<100:
+                q_index=0
+            elif q_randint>=100 and q_randint<200:
+                q_index=1
+            elif q_randint>=200 and q_randint<300:
+                q_index=2
+            elif q_randint>=300 and q_randint<400:
+                q_index=3
+            elif q_randint>=400 and q_randint<500:
+                q_index=4
+            elif q_randint>=500 and q_randint<600:
+                q_index=5
+            elif q_randint>=600 and q_randint<700:
+                q_index=6
+            elif q_randint>=700 and q_randint<800:
+                q_index=7
+            elif q_randint>=800 and q_randint<900:
+                q_index=8
+            else:
+                q_index=9
+            # If there are 2+ variants left and we have more tries left, do not return the same variant we started with.
+            if q_index == prev_index and tries<max_tries and self.bit_count_ones(self.variants_attempted) < self.variants_count-1:
+                if DEBUG: logger.info("SWPWRXBlock pick_variant() try {t}: with bit_count_ones(variants_attempted)={v} < variants_count={c}-1 we won't use the same variant {q} as prev variant".format(t=tries,v=self.bit_count_ones(self.variants_attempted),c=self.variants_count,q=q_index))
+                break
+
+            if not self.bit_is_set(self.variants_attempted,q_index):
+                if DEBUG: logger.info("SWPWRXBlock pick_variant() try {t}: found unattempted variant {q}".format(t=tries,q=q_index))
+                break
+            else:
+                if DEBUG: logger.info("pick_variant() try {t}: variant {q} has already been attempted".format(t=tries,q=q_index))
+                if self.bit_count_ones(self.variants_attempted) >= self.variants_count:
+                    if DEBUG: logger.info("pick_variant() try {t}: we have attempted all {c} variants. clearning self.variants_attempted.".format(t=tries,c=self.bit_count_ones(self.variants_attempted)))
+                    q_index = 0         # Default
+                    self.variants_attempted = 0;
+                    break
+
+        if tries>=max_tries:
+            if DEBUG: logger.error("pick_variant() could not find an unattempted variant of {l} in {m} tries! clearing self.variants_attempted.".format(l=self.q_label,m=max_tries))
+            q_index = 0         # Default
+            self.variants_attempted = 0;
+
+        if DEBUG: logger.info("pick_variant() Selected variant {v}".format(v=q_index))
+
+        # Note: we won't set self.variants_attempted for this variant until they actually begin work on it (see start_attempt() below)
+
+        question = {
+            "q_id" : self.q_id,
+            "q_user" : self.xb_user_email,
+            "q_index" : 0,
+            "q_label" : self.q_label,
+            "q_stimulus" : self.q_stimulus,
+            "q_definition" : self.q_definition,
+            "q_type" :  self.q_type,
+            "q_display_math" :  self.q_display_math,
+            "q_hint1" :  self.q_hint1,
+            "q_hint2" :  self.q_hint2,
+            "q_hint3" :  self.q_hint3,
+            "q_swpwr_problem" : self.q_swpwr_problem,
+            "q_swpwr_rank": self.q_swpwr_rank,
+            "q_swpwr_invalid_schemas": self.q_swpwr_invalid_schemas,
+            "q_swpwr_problem_hints": self.q_swpwr_problem_hints,
+            "q_weight" :  self.my_weight,
+            "q_max_attempts" : self.my_max_attempts,
+            "q_option_hint" : self.my_option_hint,
+            "q_option_showme" : self.my_option_showme,
+            "q_grade_showme_ded" : self.my_grade_showme_ded,
+            "q_grade_hints_count" : self.my_grade_hints_count,
+            "q_grade_hints_ded" : self.my_grade_hints_ded,
+            "q_grade_errors_count" : self.my_grade_errors_count,
+            "q_grade_errors_ded" : self.my_grade_errors_ded,
+            "q_grade_min_steps_count" : self.my_grade_min_steps_count,
+            "q_grade_min_steps_ded" : self.my_grade_min_steps_ded,
+            "q_grade_app_key" : self.my_grade_app_key
+        }
+
+        if DEBUG: logger.info("SWPWRXBlock pick_variant() returned question q_index={i} question={q}".format(i=question['q_index'],q=question))
+        return question
+
     # TO-DO: change this handler to perform your own actions.  You may need more
     # than one handler, or you may not need any handlers at all.
     @XBlock.json_handler
@@ -728,7 +1290,6 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         frag.initialize_js('Swpwrx2Studio')
         return frag
 
-
     def author_view(self, context=None):
         if DEBUG: logger.info('Swpwrx2 author_view() entered')
         """
@@ -750,6 +1311,7 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
 
         frag.initialize_js('Swpwrx2Author', variants)
         return frag
+
 
     @staticmethod
     def _get_statici18n_js_url():
