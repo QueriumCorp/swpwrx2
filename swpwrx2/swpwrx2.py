@@ -194,7 +194,7 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         course = get_course_by_id(self.runtime.course_id)
         if DEBUG: logger.info("SWPWRXBlock student_view() course={c}".format(c=course))
 
-        if DEBUG: logger.info("SWPWRXBlock student_view() max_attempts={a} q_max_attempts={b}".format(a=self.max_attempts,b=self.q_max_attempts))
+        if DEBUG: logger.info("SWPWRXBlock student_view() q_max_attempts={b}".format(b=self.q_max_attempts))
 
         # NOTE: Can't set a self.q_* field here if an older imported swpwrxblock doesn't define this field, since it defaults to None
         # (read only?) so we'll use instance vars my_* to remember whether to use the course-wide setting or the per-question setting.
@@ -783,7 +783,11 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
     def save_question(self, data, suffix=''):
         if DEBUG: logger.info('SWPWRXBlock save_question() entered')
         if DEBUG: logger.info('SWPWRXBlock save_question() data={d}'.format(d=data))
-        self.q_max_attempts = int(data['q_max_attempts'])
+        try:
+            self.q_max_attempts = int(data['q_max_attempts'])
+        except:
+            if DEBUG: logger.info("SWPWRXBlock save_question() could not fetch data[q_max_attempts]. Assuming 1000.")
+            self.q_max_attempts = 1000;
         self.q_weight = float(data['q_weight'])
         if data['q_option_showme'].lower() == u'true':
             self.q_option_showme = True
