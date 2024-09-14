@@ -12,9 +12,9 @@ from django.utils import translation
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Integer, String, Scope, Dict, Float, Boolean
-from xblock.utils.resources import ResourceLoader
+from xblockutils.resources import ResourceLoader
 from xblock.scorable import ScorableXBlockMixin, Score
-from xblock.utils.studio_editable import StudioEditableXBlockMixin
+from xblockutils.studio_editable import StudioEditableXBlockMixin
 from lms.djangoapps.courseware.courses import get_course_by_id
 
 from django.utils import translation
@@ -127,7 +127,7 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
     my_grade_errors_ded  = Integer(help="SWPWR Remember grade_errors_ded course setting vs question setting", default=-1, scope=Scope.user_state)
     my_grade_min_steps_count  = Integer(help="SWPWR Remember grade_min_steps_count course setting vs question setting", default=-1, scope=Scope.user_state)
     my_grade_min_steps_ded  = Integer(help="SWPWR Remember grade_min_steps_ded course setting vs question setting", default=-1, scope=Scope.user_state)
-    my_grade_app_key  = String(help="SWPWR Remember app_key course setting vs question setting", default="", scope=Scope.user_state)
+    my_grade_app_key  = String(help="SWPWR Remember app_key course setting vs question setting", default=-1, scope=Scope.user_state)
 
     # variant_attempted: Remembers the set of variant q_index values the student has already attempted.
     # We can't add a Set to Scope.user_state, or we get get runtime errors whenever we update this field:
@@ -194,7 +194,7 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         course = get_course_by_id(self.runtime.course_id)
         if DEBUG: logger.info("SWPWRXBlock student_view() course={c}".format(c=course))
 
-        if DEBUG: logger.info("SWPWRXBlock student_view() q_max_attempts={b}".format(b=self.q_max_attempts))
+        if DEBUG: logger.info("SWPWRXBlock student_view() max_attempts={a} q_max_attempts={b}".format(a=self.max_attempts,b=self.q_max_attempts))
 
         # NOTE: Can't set a self.q_* field here if an older imported swpwrxblock doesn't define this field, since it defaults to None
         # (read only?) so we'll use instance vars my_* to remember whether to use the course-wide setting or the per-question setting.
@@ -608,8 +608,7 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         if statici18n_js_url:
             frag.add_javascript_url(self.runtime.local_resource_url(self, statici18n_js_url))
 
-        # We no longer need to call final_callback.js since the code is generated in swpwr_string
-        # frag.add_javascript(self.resource_string("static/js/src/final_callback.js"))
+        frag.add_javascript(self.resource_string("static/js/src/final_callback.js"))    # Final submit callback code and define swpwr_problems[]
         invalid_schemas_js = self.q_swpwr_invalid_schemas
         if DEBUG: logger.info("SWPWRXBlock student_view() before mapping loop invalid_schemas_js={e}".format(e=invalid_schemas_js))
         mapping = { "TOTAL":"additiveTotalSchema", "DIFFERENCE":"additiveDifferenceSchema", "CHANGEINCREASE":"additiveChangeSchema", "CHANGEDECREASE":"subtractiveChangeSchema", "EQUALGROUPS":"multiplicativeEqualGroupsSchema", "COMPARE":"multiplicativeCompareSchema" }
@@ -777,299 +776,3 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         Generate initial i18n with dummy method.
         """
         return translation.gettext_noop('Dummy')
-
-    # SAVE QUESTION
-    @XBlock.json_handler
-    def save_question(self, data, suffix=''):
-        if DEBUG: logger.info('SWPWRXBlock save_question() entered')
-        if DEBUG: logger.info('SWPWRXBlock save_question() data={d}'.format(d=data))
-        try:
-            self.q_max_attempts = int(data['q_max_attempts'])
-        except:
-            if DEBUG: logger.info("SWPWRXBlock save_question() could not fetch data[q_max_attempts]. Assuming 1000.")
-            self.q_max_attempts = 1000;
-        self.q_weight = float(data['q_weight'])
-        if data['q_option_showme'].lower() == u'true':
-            self.q_option_showme = True
-        else:
-            self.q_option_showme = False
-        if data['q_option_hint'].lower() == u'true':
-            self.q_option_hint = True
-        else:
-            self.q_option_hint = False
-        self.q_grade_showme_ded = float(data['q_grade_showme_ded'])
-        self.q_grade_hints_count = int(data['q_grade_hints_count'])
-        self.q_grade_hints_ded = float(data['q_grade_hints_ded'])
-        self.q_grade_errors_count = int(data['q_grade_errors_count'])
-        self.q_grade_errors_ded = float(data['q_grade_errors_ded'])
-        self.q_grade_min_steps_count = int(data['q_grade_min_steps_count'])
-        self.q_grade_min_steps_ded = float(data['q_grade_min_steps_ded'])
-        self.q_grade_app_key = str(data['q_grade_app_key'])
-
-        self.q_id = data['id']
-        self.q_label = data['label']
-        self.q_stimulus = data['stimulus']
-        self.q_definition = data['definition']
-        self.q_type = data['qtype']
-        self.q_display_math = data['display_math']
-        self.q_hint1 = data['hint1']
-        self.q_hint2 = data['hint2']
-        self.q_hint3 = data['hint3']
-        self.q_swpwr_problem = data['swpwr_problem']
-        self.q_swpwr_rank = data['swpwr_rank']
-        self.q_swpwr_invalid_schemas = data['swpwr_invalid_schemas']
-        self.q_swpwr_problem_hints = data['swpwr_problem_hints']
-
-        self.display_name = "Step-by-Step POWER"
-
-        # mcdaniel jul-2020: fix syntax error in print statement
-        print(self.display_name)
-        return {'result': 'success'}
-
-
-# SWPWR RESULTS: Save the final results of the SWPWR React app as a stringified structure.
-    @XBlock.json_handler
-    def save_swpwr_results(self, data, suffix=''):
-        if DEBUG: logger.info("SWPWRXBlock save_swpwr_results() data={d}".format(d=data))
-        self.swpwr_results = json.dumps(data, separators=(',', ':'))
-        if DEBUG: logger.info("SWPWRXBlock save_swpwr_results() self.swpwr_results={r}".format(r=self.swpwr_results))
-        self.save() # Time to persist our state!!!
-        if DEBUG: logger.info("SWPWRXBlock save_swpwr_results() back from save")
-        return {'result': 'success'}
-
-    # Do necessary overrides from ScorableXBlockMixin
-    def has_submitted_answer(self):
-        if DEBUG: logger.info('SWPWRXBlock has_submitted_answer() entered')
-        """
-        Returns True if the problem has been answered by the runtime user.
-        """
-        if DEBUG: logger.info("SWPWRXBlock has_submitted_answer() {a}".format(a=self.is_answered))
-        return self.is_answered
-
-
-    def get_score(self):
-        if DEBUG: logger.info('SWPWRXBlock get_score() entered')
-        """
-        Return a raw score already persisted on the XBlock.  Should not
-        perform new calculations.
-        Returns:
-            Score(raw_earned=float, raw_possible=float)
-        """
-        if DEBUG: logger.info("SWPWRXBlock get_score() earned {e}".format(e=self.raw_earned))
-        if DEBUG: logger.info("SWPWRXBlock get_score() max {m}".format(m=self.max_score()))
-        return Score(float(self.raw_earned), float(self.max_score()))
-
-
-    def set_score(self, score):
-        """
-        Persist a score to the XBlock.
-        The score is a named tuple with a raw_earned attribute and a
-        raw_possible attribute, reflecting the raw earned score and the maximum
-        raw score the student could have earned respectively.
-        Arguments:
-            score: Score(raw_earned=float, raw_possible=float)
-        Returns:
-            None
-        """
-        if DEBUG: logger.info("SWPWRXBlock set_score() earned {e}".format(e=score.raw_earned))
-        self.raw_earned = score.raw_earned
-
-
-    def calculate_score(self):
-        """
-        Calculate a new raw score based on the state of the problem.
-        This method should not modify the state of the XBlock.
-        Returns:
-            Score(raw_earned=float, raw_possible=float)
-        """
-        if DEBUG: logger.info("SWPWRXBlock calculate_score() grade {g}".format(g=self.grade))
-        if DEBUG: logger.info("SWPWRXBlock calculate_score() max {m}".format(m=self.max_score))
-        return Score(float(self.grade), float(self.max_score()))
-
-
-    def allows_rescore(self):
-        """
-        Boolean value: Can this problem be rescored?
-        Subtypes may wish to override this if they need conditional support for
-        rescoring.
-        """
-        if DEBUG: logger.info("SWPWRXBlock allows_rescore() False")
-        return False
-
-
-    def max_score(self):
-        """
-        Function which returns the max score for an xBlock which emits a score
-        https://openedx.atlassian.net/wiki/spaces/AC/pages/161400730/Open+edX+Runtime+XBlock+API#OpenedXRuntimeXBlockAPI-max_score(self):
-        :return: Max Score for this problem
-        """
-        # Want the normalized, unweighted score here (1), not the points possible (3)
-        return 1
-
-
-    def weighted_grade(self):
-        """
-        Returns the block's current saved grade multiplied by the block's
-        weight- the number of points earned by the learner.
-        """
-        if DEBUG: logger.info("SWPWRXBlock weighted_grade() earned {e}".format(e=self.raw_earned))
-        if DEBUG: logger.info("SWPWRXBlock weighted_grade() weight {w}".format(w=self.q_weight))
-        return self.raw_earned * self.q_weight
-
-
-    def bit_count_ones(self,var):
-        """
-        Returns the count of one bits in an integer variable
-        Note that Python ints are full-fledged objects, unlike in C, so ints are plenty long for these operations.
-        """
-        if DEBUG: logger.info("SWPWRXBlock bit_count_ones var={v}".format(v=var))
-        count=0
-        bits = var
-        for b in range(32):
-            lsb = (bits >> b) & 1;
-            count = count + lsb;
-        if DEBUG: logger.info("SWPWRXBlock bit_count_ones result={c}".format(c=count))
-        return count
-
-
-    def bit_set_one(self,var,bitnum):
-        """
-        return var = var with bit 'bitnum' set
-        Note that Python ints are full-fledged objects, unlike in C, so ints are plenty long for these operations.
-        """
-        if DEBUG: logger.info("SWPWRXBlock bit_set_one var={v} bitnum={b}".format(v=var,b=bitnum))
-        var = var | (1 << bitnum)
-        if DEBUG: logger.info("SWPWRXBlock bit_set_one result={v}".format(v=var))
-        return var
-
-
-    def bit_is_set(self,var,bitnum):
-        """
-        return True if bit bitnum is set in var
-        Note that Python ints are full-fledged objects, unlike in C, so ints are plenty long for these operations.
-        """
-        if DEBUG: logger.info("SWPWRXBlock bit_is_set var={v} bitnum={b}".format(v=var,b=bitnum))
-        result = var & (1 << bitnum)
-        if DEBUG: logger.info("SWPWRXBlock bit_is_set result={v} b={b}".format(v=result,b=bool(result)))
-        return bool(result)
-
-
-    def pick_variant(self):
-       # pick_variant() selects one of the available question variants that we have not yet attempted.
-       # If there is only one variant left, we have to return that one.
-       # If there are 2+ variants left, do not return the same one we started with.
-       # If we've attempted all variants, we clear the list of attempted variants and pick again.
-       #  Returns the question structure for the one we will use this time.
-
-        try:
-            prev_index = self.q_index
-        except (NameError,AttributeError) as e:
-            prev_index = -1
-
-        if DEBUG: logger.info("SWPWRXBlock pick_variant() started replacing prev_index={p}".format(p=prev_index))
-
-        # If there's no self.q_index, then this is our first look at this question in this session, so
-        # use self.previous_variant if we can.  This won't restore all previous attempts, but makes sure we
-        # don't use the variant that is displayed in the student's last attempt data.
-        if (prev_index == -1):
-            try:         # use try block in case attribute wasn't saved in previous student work
-                 prev_index = self.previous_variant
-                 if DEBUG: logger.info("SWPWRXBlock pick_variant() using previous_variant for prev_index={p}".format(p=prev_index))
-            except (NameError,AttributeError) as e:
-                 if DEBUG: logger.info("SWPWRXBlock pick_variant() self.previous_variant does not exist. Using -1: {e}".format(e=e))
-                 prev_index = -1
-
-        if self.bit_count_ones(self.variants_attempted) >= self.variants_count:
-            if DEBUG: logger.warn("SWPWRXBlock pick_variant() seen all variants attempted={a} count={c}, clearing variants_attempted".format(a=self.variants_attempted,c=self.variants_count))
-            self.variants_attempted = 0			# We have not yet attempted any variants
-
-        tries = 0					# Make sure we dont try forever to find a new variant
-        max_tries = 100
-
-        if self.variants_count <= 0:
-            if DEBUG: logger.warn("SWPWRXBlock pick_variant() bad variants_count={c}, setting to 1.".format(c=self.variants_count))
-            self.variants_count = 1;
-
-        while tries<max_tries:
-            tries=tries+1
-            q_randint = random.randint(0, ((self.variants_count*100)-1))	# 0..999 for 10 variants, 0..99 for 1 variant, etc.
-            if DEBUG: logger.info("SWPWRXBlock pick_variant() try {t}: q_randint={r}".format(t=tries,r=q_randint))
-
-            if q_randint>=0 and q_randint<100:
-                q_index=0
-            elif q_randint>=100 and q_randint<200:
-                q_index=1
-            elif q_randint>=200 and q_randint<300:
-                q_index=2
-            elif q_randint>=300 and q_randint<400:
-                q_index=3
-            elif q_randint>=400 and q_randint<500:
-                q_index=4
-            elif q_randint>=500 and q_randint<600:
-                q_index=5
-            elif q_randint>=600 and q_randint<700:
-                q_index=6
-            elif q_randint>=700 and q_randint<800:
-                q_index=7
-            elif q_randint>=800 and q_randint<900:
-                q_index=8
-            else:
-                q_index=9
-
-            # If there are 2+ variants left and we have more tries left, do not return the same variant we started with.
-            if q_index == prev_index and tries<max_tries and self.bit_count_ones(self.variants_attempted) < self.variants_count-1:
-                if DEBUG: logger.info("SWPWRXBlock pick_variant() try {t}: with bit_count_ones(variants_attempted)={v} < variants_count={c}-1 we won't use the same variant {q} as prev variant".format(t=tries,v=self.bit_count_ones(self.variants_attempted),c=self.variants_count,q=q_index))
-                break
-
-            if not self.bit_is_set(self.variants_attempted,q_index):
-                if DEBUG: logger.info("SWPWRXBlock pick_variant() try {t}: found unattempted variant {q}".format(t=tries,q=q_index))
-                break
-            else:
-                if DEBUG: logger.info("pick_variant() try {t}: variant {q} has already been attempted".format(t=tries,q=q_index))
-                if self.bit_count_ones(self.variants_attempted) >= self.variants_count:
-                    if DEBUG: logger.info("pick_variant() try {t}: we have attempted all {c} variants. clearning self.variants_attempted.".format(t=tries,c=self.bit_count_ones(self.variants_attempted)))
-                    q_index = 0		# Default
-                    self.variants_attempted = 0;
-                    break
-
-        if tries>=max_tries:
-            if DEBUG: logger.error("pick_variant() could not find an unattempted variant of {l} in {m} tries! clearing self.variants_attempted.".format(l=self.q_label,m=max_tries))
-            q_index = 0		# Default
-            self.variants_attempted = 0;
-
-        if DEBUG: logger.info("pick_variant() Selected variant {v}".format(v=q_index))
-
-        # Note: we won't set self.variants_attempted for this variant until they actually begin work on it (see start_attempt() below)
-
-        question = {
-            "q_id" : self.q_id,
-            "q_user" : self.xb_user_email,
-            "q_index" : 0,
-            "q_label" : self.q_label,
-            "q_stimulus" : self.q_stimulus,
-            "q_definition" : self.q_definition,
-            "q_type" :  self.q_type,
-            "q_display_math" :  self.q_display_math,
-            "q_hint1" :  self.q_hint1,
-            "q_hint2" :  self.q_hint2,
-            "q_hint3" :  self.q_hint3,
-            "q_swpwr_problem" : self.q_swpwr_problem,
-            "q_swpwr_rank": self.q_swpwr_rank,
-            "q_swpwr_invalid_schemas": self.q_swpwr_invalid_schemas,
-            "q_swpwr_problem_hints": self.q_swpwr_problem_hints,
-            "q_weight" :  self.my_weight,
-            "q_max_attempts" : self.my_max_attempts,
-            "q_option_hint" : self.my_option_hint,
-            "q_option_showme" : self.my_option_showme,
-            "q_grade_showme_ded" : self.my_grade_showme_ded,
-            "q_grade_hints_count" : self.my_grade_hints_count,
-            "q_grade_hints_ded" : self.my_grade_hints_ded,
-            "q_grade_errors_count" : self.my_grade_errors_count,
-            "q_grade_errors_ded" : self.my_grade_errors_ded,
-            "q_grade_min_steps_count" : self.my_grade_min_steps_count,
-            "q_grade_min_steps_ded" : self.my_grade_min_steps_ded,
-            "q_grade_app_key" : self.my_grade_app_key
-        }
-
-        if DEBUG: logger.info("SWPWRXBlock pick_variant() returned question q_index={i} question={q}".format(i=question['q_index'],q=question))
-        return question

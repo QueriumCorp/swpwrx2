@@ -21,7 +21,7 @@
   padding: 0px !important
 }
 
-.swpwrx2_block {
+.swpwrxblock_block {
     position: relative;
     transition: min-height 0.35s ease-out;
     overflow: hidden;
@@ -34,38 +34,38 @@
 .block_worked {
     min-height: 100px;
 }
-.swpwrx2_block .count {
+.swpwrxblock_block .count {
     font-weight: bold;
 }
 
-.swpwrx2_block p {
+.swpwrxblock_block p {
     cursor: pointer;
 }
 
-.swpwrx2_block div.practice-problem {
+.swpwrxblock_block div.practice-problem {
     margin: 5px;
     padding: 10px;
     border: 1px solid forestgreen;
 }
 
-.swpwrx2_block .grade-box {
+.swpwrxblock_block .grade-box {
     text-align: center;
     user-select: none;
 }
 
-.swpwrx2_block .star-box {
+.swpwrxblock_block .star-box {
     text-align: center;
     user-select: none;
     margin-bottom: 10px;
 }
 
-.swpwrx2_block .star-icon {
+.swpwrxblock_block .star-icon {
     color: #ddd;
     font-size: 2em;
     position: relative;
 }
 
-.swpwrx2_block .star-icon.full:before {
+.swpwrxblock_block .star-icon.full:before {
     text-shadow: none;
     color: #FDE16D;
     content: '\2605';
@@ -74,7 +74,7 @@
     left: 0;
 }
 
-.swpwrx2_block .star-icon.half:before {
+.swpwrxblock_block .star-icon.half:before {
     text-shadow: none;
     color: #FDE16D;
     content: '\2605';
@@ -87,7 +87,7 @@
 
 @-moz-document url-prefix() {
     /* Firefox Hack :( */
-    .swpwrx2_block .star-icon {
+    .swpwrxblock_block .star-icon {
         font-size: 50px;
         line-height: 34px;
     }
