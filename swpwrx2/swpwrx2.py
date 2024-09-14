@@ -12,7 +12,7 @@ from django.utils import translation
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Integer, String, Scope, Dict, Float, Boolean
-from xblockutils.resources import ResourceLoader
+from xblock.utils.resources import ResourceLoader
 from xblock.scorable import ScorableXBlockMixin, Score
 from xblock.utils.studio_editable import StudioEditableXBlockMixin
 from lms.djangoapps.courseware.courses import get_course_by_id
