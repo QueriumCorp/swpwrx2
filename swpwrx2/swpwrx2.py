@@ -579,8 +579,36 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         if DEBUG: logger.info("SWPWRXBlock student_view() self.variants_count={c}".format(c=self.variants_count))
         # Pick a variant at random, and make sure that it is one we haven't attempted before.
 
-        random.seed()                           # Use the clock to seed the random number generator for picking variants
-        self.question = self.pick_variant()
+        # random.seed()                           # Use the clock to seed the random number generator for picking variants
+        self.question = {
+            "q_id" : self.q_id,
+            "q_user" : self.xb_user_email,
+            "q_index" : 0,
+            "q_label" : self.q_label,
+            "q_stimulus" : self.q_stimulus,
+            "q_definition" : self.q_definition,
+            "q_type" :  self.q_type,
+            "q_display_math" :  self.q_display_math,
+            "q_hint1" :  self.q_hint1,
+            "q_hint2" :  self.q_hint2,
+            "q_hint3" :  self.q_hint3,
+            "q_swpwr_problem" : self.q_swpwr_problem,
+            "q_swpwr_rank": self.q_swpwr_rank,
+            "q_swpwr_invalid_schemas": self.q_swpwr_invalid_schemas,
+            "q_swpwr_problem_hints": self.q_swpwr_problem_hints,
+            "q_weight" :  self.my_weight,
+            "q_max_attempts" : self.my_max_attempts,
+            "q_option_hint" : self.my_option_hint,
+            "q_option_showme" : self.my_option_showme,
+            "q_grade_showme_ded" : self.my_grade_showme_ded,
+            "q_grade_hints_count" : self.my_grade_hints_count,
+            "q_grade_hints_ded" : self.my_grade_hints_ded,
+            "q_grade_errors_count" : self.my_grade_errors_count,
+            "q_grade_errors_ded" : self.my_grade_errors_ded,
+            "q_grade_min_steps_count" : self.my_grade_min_steps_count,
+            "q_grade_min_steps_ded" : self.my_grade_min_steps_ded,
+            "q_grade_app_key" : self.my_grade_app_key
+        }
 
         # question = self.question              # Don't need local var
         q_index = self.question['q_index']
