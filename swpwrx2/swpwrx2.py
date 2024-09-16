@@ -593,7 +593,8 @@ class Swpwrx2(StudioEditableXBlockMixin, ScorableXBlockMixin,XBlock):
         frag.add_resource('<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />','text/html','head')
         frag.add_resource('<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />','text/html','head')
         frag.add_resource('<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />','text/html','head')
-        frag.add_resource('<link rel="manifest" href="/site.webmanifest" />','text/html','head')
+        # Don't load site.webmanifest so we don't have to adjust it's resource path in the url.
+        # frag.add_resource('<link rel="manifest" href="/site.webmanifest" />','text/html','head')
         frag.add_resource('<meta name="viewport" content="width=device-width,initial-scale=1.0"/>','text/html','head')
         frag.add_resource('<link rel="preconnect" href="https://fonts.googleapis.com" />','text/html','head')
         frag.add_resource('<link rel="preconnect" href="https://fonts.googleapis.com" />','text/html','head')
