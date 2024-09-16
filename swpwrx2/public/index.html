@@ -22,7 +22,43 @@
       let params = new URLSearchParams(window.location.search)
       let urlRank = params.get('rank')
       let urlAppKey = params.get('appKey')
+      /*
 
+{
+    "appKey": "SBIRPhase2",
+    "policyId": "$A9$",
+    "problemId": "Fall2024Newb",
+    "title": "SAMPLE",
+    "stimulus": "Mark rode his bicycle 9 miles on Saturday. He rode 3 miles on Sunday. In all, he rode 12 miles over the weekend.",
+    "class": "gradeBasicAlgebra",
+    "question": "SolveWordProblemNewb[{\"Mark rode his bicycle 9 miles on Saturday. He rode 3 miles on Sunday. In all, he rode 12 miles over the weekend.\"}]",
+    "hints": [
+        "",
+        "",
+        ""
+    ],
+    "wpHints": [
+        {
+            "page": "newbFindFacts",
+            "hints": [
+                "The first known amount is **9 miles**. Do you see it up above? Highlight it. Then pull it out and place it under Known.",
+                "The next known amount is **3 miles**. Highlight it, pull it out, and place it under Known.",
+                "The next known amount is **12 miles**. Put it under Known, too.",
+                "That&apos;s the last known amount. Now let&apos;s look for unknown amounts.",
+                "If you think there are no unknown amounts... you&apos;re right!&#10;In this story, all of the amounts are known. So don&apos;t put anything under Unknown. We&apos;ll learn more about unknown amounts later on.",
+                "For this one, we&apos;re all done pulling it apart. Click → and I&apos;ll just double check your work before we move on."
+            ]
+        },
+        {
+            "page": "newbProblemType",
+            "hints": [
+                "The problem has two parts, 9 miles on Saturday and 3 miles on Sunday.&#10;Those parts are put together to make the total, 12 miles.&#10;Pick the Total problem type. Then click →."
+            ]
+        }
+    ]
+}
+
+*/
       if (urlRank === 'newb') {
         window.swpwr = {
           options: {
@@ -43,33 +79,32 @@
             familiarName: 'Robert',
           },
           problem: {
-            appKey: urlAppKey || 'JiraTestPage',
+            appKey: 'SBIRPhase2',
             policyId: '$A9$',
             problemId: 'Fall2024Newb',
-            title: 'Fall2024Newb',
+            title: 'SAMPLE',
             stimulus:
-              'Mark rode his bicycle 9 miles on Saturday. He rode 3 miles on Sunday. In all, he rode 12 miles over the weekend?',
+              'Mark rode his bicycle 9 miles on Saturday. He rode 3 miles on Sunday. In all, he rode 12 miles over the weekend.',
             topic: 'gradeBasicAlgebra',
             definition:
               'SolveWordProblemNewb[{"Mark rode his bicycle 9 miles on Saturday. He rode 3 miles on Sunday. In all, he rode 12 miles over the weekend."}]',
-            mathHints: [],
+            hints: ['', '', ''],
             wpHints: [
               {
-                pageId: 'newbFindFacts',
+                page: 'newbFindFacts',
                 hints: [
-                  'The first known amount is "9 miles".&#10;&#10;Do you see it up above? Highlight it. Then pull it out and place it under Known.',
-                  'The next known amount is "3 miles". Highlight it, pull it out, and place it under Known.',
-                  'The next known amount is "12 miles". Put it under Known, too.',
-                  "That's the last known amount. Click me to see what's next.",
-                  "Now let's look for unknown amounts.",
-                  "If you think there are no unknown amounts... you're right! In this story all of the amounts are known. So don't put anything under Unknown. We'll learn more about unknown amounts later on.",
-                  "For this one, we're all done pulling it apart. Click → and I'll just double check your work before we move on.",
+                  'The first known amount is **9 miles**. Do you see it up above? Highlight it. Then pull it out and place it under Known.',
+                  'The next known amount is **3 miles**. Highlight it, pull it out, and place it under Known.',
+                  'The next known amount is **12 miles**. Put it under Known, too.',
+                  'That&apos;s the last known amount. Now let&apos;s look for unknown amounts.',
+                  'If you think there are no unknown amounts... you&apos;re right!&#10;In this story, all of the amounts are known. So don&apos;t put anything under Unknown. We&apos;ll learn more about unknown amounts later on.',
+                  'For this one, we&apos;re all done pulling it apart. Click → and I&apos;ll just double check your work before we move on.',
                 ],
               },
               {
-                pageId: 'newbProblemType',
+                page: 'newbProblemType',
                 hints: [
-                  'The problem has two parts, 9 miles on Saturday and 3 miles on Sunday. Those parts are put together to make the total, 12 miles. Pick the Total problem type. Then click →.',
+                  'The problem has two parts, 9 miles on Saturday and 3 miles on Sunday.&#10;Those parts are put together to make the total, 12 miles.&#10;Pick the Total problem type. Then click →.',
                 ],
               },
             ],
@@ -163,6 +198,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/public/main.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
