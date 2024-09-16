@@ -14,7 +14,7 @@ from xblock.core import XBlock
 from xblock.fields import Integer, String, Scope, Dict, Float, Boolean
 from xblockutils.resources import ResourceLoader
 from xblock.scorable import ScorableXBlockMixin, Score
-from xblockutils.studio_editable import StudioEditableXBlockMixin
+from xblock.utils.studio_editable import StudioEditableXBlockMixin
 from lms.djangoapps.courseware.courses import get_course_by_id
 
 from django.utils import translation
